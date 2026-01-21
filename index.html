@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat Pro</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="new-chat-btn" onclick="newChat()">
+                <span class="btn-icon">➕</span> New chat
+            </button>
+        </div>
+
+        <div class="chat-history" id="chatHistory">
+            <!-- Chat history populated by JavaScript -->
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="user-section" id="userSection">
+                <div class="user-info">
+                    <div class="avatar">👤</div>
+                    <div class="user-details">
+                        <div class="username" id="username">Guest</div>
+                        <div class="coin-badge">
+                            🪙 <span id="coinAmount">0</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="upgrade-btn" onclick="showUpgradeModal()">
+                    ⭐ Upgrade
+                </button>
+                <button class="login-btn" id="loginBtn" onclick="showLoginModal()">
+                    Login
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-area">
+        <div class="chat-container">
+            <div class="messages" id="messages">
+                <div class="welcome-message">
+                    <h1>AI Chat Pro</h1>
+                    <p>How can I help you today?</p>
+                </div>
+            </div>
+
+            <div class="input-section">
+                <div class="input-wrapper">
+                    <button class="icon-btn" onclick="toggleImageMenu()" title="Generate Image">
+                        🎨
+                    </button>
+                    <textarea 
+                        id="userInput" 
+                        placeholder="Message AI Chat Pro..."
+                        rows="1"
+                        onkeypress="handleKeyPress(event)"
+                    ></textarea>
+                    <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                        ↑
+                    </button>
+                </div>
+                <div class="image-menu" id="imageMenu">
+                    <button onclick="generateImage('landscape')">🏞️ Landscape</button>
+                    <button onclick="generateImage('portrait')">🖼️ Portrait</button>
+                    <button onclick="generateImage('abstract')">🎨 Abstract</button>
+                    <button onclick="generateImage('custom')">✨ Custom</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-overlay" onclick="closeLoginModal()"></div>
+        <div class="modal-box">
+            <h2>Welcome back</h2>
+            <input type="email" id="loginEmail" placeholder="Email address" />
+            <input type="password" id="loginPassword" placeholder="Password" />
+            <button class="primary-btn" onclick="handleLogin()">Continue</button>
+            <p class="switch-text">
+                Don't have an account? <a href="#" onclick="showSignupModal()">Sign up</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div class="modal" id="signupModal">
+        <div class="modal-overlay" onclick="closeSignupModal()"></div>
+        <div class="modal-box">
+            <h2>Create your account</h2>
+            <input type="email" id="signupEmail" placeholder="Email address" />
+            <input type="password" id="signupPassword" placeholder="Password (min 6 chars)" />
+            <button class="primary-btn" onclick="handleSignup()">Create account</button>
+            <p class="switch-text">
+                Already have an account? <a href="#" onclick="showLoginModal()">Log in</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Upgrade Modal -->
+    <div class="modal" id="upgradeModal">
+        <div class="modal-overlay" onclick="closeUpgradeModal()"></div>
+        <div class="modal-box upgrade-box">
+            <h2>⭐ Upgrade to Pro</h2>
+            <div class="pricing-cards">
+                <div class="pricing-card">
+                    <div class="plan-name">Monthly Pro</div>
+                    <div class="plan-price">🪙 1,000 coins</div>
+                    <div class="plan-value">($10 USD)</div>
+                    <ul class="plan-features">
+                        <li>✓ Unlimited messages</li>
+                        <li>✓ Image generation</li>
+                        <li>✓ Priority support</li>
+                        <li>✓ 30 days access</li>
+                    </ul>
+                    <button class="purchase-btn" onclick="purchasePlan('monthly')">
+                        Purchase Monthly
+                    </button>
+                </div>
+                <div class="pricing-card featured">
+                    <div class="best-value">BEST VALUE</div>
+                    <div class="plan-name">Yearly Pro</div>
+                    <div class="plan-price">🪙 10,000 coins</div>
+                    <div class="plan-value">($100 USD)</div>
+                    <ul class="plan-features">
+                        <li>✓ Everything in Monthly</li>
+                        <li>✓ 365 days access</li>
+                        <li>✓ Save 2 months!</li>
+                        <li>✓ Exclusive features</li>
+                    </ul>
+                    <button class="purchase-btn featured-btn" onclick="purchasePlan('yearly')">
+                        Purchase Yearly
+                    </button>
+                </div>
+            </div>
+            <div class="coin-info">
+                <p>💰 Need more coins? 100 coins = $1 USD</p>
+                <button class="buy-coins-btn" onclick="showBuyCoins()">Buy Coins</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buy Coins Modal -->
+    <div class="modal" id="buyCoinsModal">
+        <div class="modal-overlay" onclick="closeBuyCoinsModal()"></div>
+        <div class="modal-box">
+            <h2>💰 Buy Coins</h2>
+            <div class="coin-packages">
+                <div class="coin-package" onclick="buyCoins(500, 5)">
+                    <div class="package-coins">🪙 500</div>
+                    <div class="package-price">$5 USD</div>
+                </div>
+                <div class="coin-package" onclick="buyCoins(1000, 10)">
+                    <div class="package-coins">🪙 1,000</div>
+                    <div class="package-price">$10 USD</div>
+                </div>
+                <div class="coin-package featured" onclick="buyCoins(2500, 20)">
+                    <div class="bonus-badge">+500 FREE</div>
+                    <div class="package-coins">🪙 2,500</div>
+                    <div class="package-price">$20 USD</div>
+                </div>
+                <div class="coin-package" onclick="buyCoins(5000, 50)">
+                    <div class="package-coins">🪙 5,000</div>
+                    <div class="package-price">$50 USD</div>
+                </div>
+                <div class="coin-package featured" onclick="buyCoins(12000, 100)">
+                    <div class="bonus-badge">+2000 FREE</div>
+                    <div class="package-coins">🪙 12,000</div>
+                    <div class="package-price">$100 USD</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
