@@ -2,26 +2,191 @@
 let currentUser = null;
 let currentChatId = null;
 let chatHistory = {};
-let messageCount = 0;
+
+// Admin Account
+const ADMIN_EMAIL = 'nood2proinbloxfruit@gmail.com';
+
+// Pricing (1000 coins = $1 USD)
+const MONTHLY_PRO_COST = 10000; // $10 USD
+const YEARLY_PRO_COST = 100000; // $100 USD
+const IMAGE_COST = 200; // 200 coins per image ($0.20)
+
+// Free User Limits
+const FREE_MESSAGE_LIMIT = 50;
+const FREE_COOLDOWN_HOURS = 5; // 5 hours cooldown after hitting limit
 
 // Initialize
 window.onload = function() {
+    initializeAdminAccount();
     loadUser();
     updateUI();
     loadChatHistory();
+    checkMessageLimit();
 };
+
+// Initialize Admin Account with Infinite Pro
+function initializeAdminAccount() {
+    const adminKey = 'user_' + ADMIN_EMAIL;
+    let adminData = localStorage.getItem(adminKey);
+    
+    if (!adminData) {
+        const admin = {
+            email: ADMIN_EMAIL,
+            password: 'NoodPro2025!',
+            coins: 0,
+            isPro: true,
+            proExpiry: 'infinity',
+            createdAt: Date.now(),
+            isAdmin: true,
+            totalEarnings: 0,
+            messagesUsed: 0,
+            lastResetTime: Date.now()
+        };
+        localStorage.setItem(adminKey, JSON.stringify(admin));
+    } else {
+        // Ensure admin always has infinite pro
+        let admin = JSON.parse(adminData);
+        admin.isPro = true;
+        admin.proExpiry = 'infinity';
+        admin.isAdmin = true;
+        localStorage.setItem(adminKey, JSON.stringify(admin));
+    }
+}
+
+// Transfer coins to admin account
+function transferToAdmin(amount, reason) {
+    const adminKey = 'user_' + ADMIN_EMAIL;
+    let adminData = localStorage.getItem(adminKey);
+    
+    if (adminData) {
+        let admin = JSON.parse(adminData);
+        admin.coins = (admin.coins || 0) + amount;
+        admin.totalEarnings = (admin.totalEarnings || 0) + amount;
+        localStorage.setItem(adminKey, JSON.stringify(admin));
+        
+        // Log transaction
+        logTransaction(currentUser.email, ADMIN_EMAIL, amount, reason);
+    }
+}
+
+// Log transactions
+function logTransaction(from, to, amount, reason) {
+    let transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+    transactions.push({
+        from: from,
+        to: to,
+        amount: amount,
+        reason: reason,
+        timestamp: Date.now(),
+        date: new Date().toLocaleString()
+    });
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+}
+
+// Check if user can send messages
+function canSendMessage() {
+    if (!currentUser) return false;
+    
+    // Admin and Pro users have unlimited messages
+    if (currentUser.isAdmin || currentUser.isPro) return true;
+    
+    // Check if cooldown period has passed
+    const now = Date.now();
+    const timeSinceReset = now - (currentUser.lastResetTime || 0);
+    const cooldownMs = FREE_COOLDOWN_HOURS * 60 * 60 * 1000;
+    
+    // Reset message count if cooldown has passed
+    if (timeSinceReset >= cooldownMs) {
+        currentUser.messagesUsed = 0;
+        currentUser.lastResetTime = now;
+        saveUser();
+        return true;
+    }
+    
+    // Check if user has messages left
+    return currentUser.messagesUsed < FREE_MESSAGE_LIMIT;
+}
+
+function getRemainingMessages() {
+    if (!currentUser) return 0;
+    if (currentUser.isAdmin || currentUser.isPro) return 'Unlimited';
+    
+    const now = Date.now();
+    const timeSinceReset = now - (currentUser.lastResetTime || 0);
+    const cooldownMs = FREE_COOLDOWN_HOURS * 60 * 60 * 1000;
+    
+    if (timeSinceReset >= cooldownMs) {
+        return FREE_MESSAGE_LIMIT;
+    }
+    
+    return Math.max(0, FREE_MESSAGE_LIMIT - (currentUser.messagesUsed || 0));
+}
+
+function getTimeUntilReset() {
+    if (!currentUser || currentUser.isPro || currentUser.isAdmin) return null;
+    
+    const now = Date.now();
+    const timeSinceReset = now - (currentUser.lastResetTime || 0);
+    const cooldownMs = FREE_COOLDOWN_HOURS * 60 * 60 * 1000;
+    
+    if (timeSinceReset >= cooldownMs) return null;
+    
+    const timeLeft = cooldownMs - timeSinceReset;
+    const hours = Math.floor(timeLeft / (60 * 60 * 1000));
+    const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
+    
+    return `${hours}h ${minutes}m`;
+}
+
+function checkMessageLimit() {
+    if (!currentUser) return;
+    
+    const remaining = getRemainingMessages();
+    const timeLeft = getTimeUntilReset();
+    
+    if (remaining === 0 && timeLeft) {
+        showLimitWarning(timeLeft);
+    }
+}
+
+function showLimitWarning(timeLeft) {
+    const messages = document.getElementById('messages');
+    const warning = document.createElement('div');
+    warning.className = 'limit-warning';
+    warning.innerHTML = `
+        <div class="warning-content">
+            <h3>⏰ Message Limit Reached</h3>
+            <p>You've used all 50 free messages today.</p>
+            <p>Time until reset: <strong>${timeLeft}</strong></p>
+            <button onclick="showUpgradeModal()" class="upgrade-now-btn">⭐ Upgrade to Pro for Unlimited Messages</button>
+        </div>
+    `;
+    messages.appendChild(warning);
+}
 
 // User Authentication
 function loadUser() {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
+        
+        // Check if Pro expired (except admin)
+        if (currentUser.email !== ADMIN_EMAIL && currentUser.isPro && currentUser.proExpiry !== 'infinity') {
+            if (Date.now() > currentUser.proExpiry) {
+                currentUser.isPro = false;
+                currentUser.proExpiry = null;
+                saveUser();
+                alert('⚠️ Your Pro subscription has expired. Upgrade again to continue unlimited access!');
+            }
+        }
     }
 }
 
 function saveUser() {
     if (currentUser) {
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        const userKey = 'user_' + currentUser.email;
+        localStorage.setItem(userKey, JSON.stringify(currentUser));
     }
 }
 
@@ -47,7 +212,7 @@ function handleLogin() {
     const password = document.getElementById('loginPassword').value;
 
     if (!email || !password) {
-        alert('Please fill in all fields');
+        alert('❌ Please fill in all fields');
         return;
     }
 
@@ -55,14 +220,14 @@ function handleLogin() {
     const userData = localStorage.getItem(userKey);
 
     if (!userData) {
-        alert('Account not found. Please sign up first.');
+        alert('❌ Account not found. Please sign up first.');
         return;
     }
 
     const user = JSON.parse(userData);
     
     if (user.password !== password) {
-        alert('Incorrect password');
+        alert('❌ Incorrect password');
         return;
     }
 
@@ -70,7 +235,8 @@ function handleLogin() {
     saveUser();
     closeLoginModal();
     updateUI();
-    alert('Welcome back, ' + email + '!');
+    checkMessageLimit();
+    alert('✅ Welcome back, ' + email + '!');
 }
 
 function handleSignup() {
@@ -78,29 +244,33 @@ function handleSignup() {
     const password = document.getElementById('signupPassword').value;
 
     if (!email || !email.includes('@')) {
-        alert('Please enter a valid email');
+        alert('❌ Please enter a valid email');
         return;
     }
 
     if (password.length < 6) {
-        alert('Password must be at least 6 characters');
+        alert('❌ Password must be at least 6 characters');
         return;
     }
 
     const userKey = 'user_' + email;
     
     if (localStorage.getItem(userKey)) {
-        alert('Account already exists. Please login.');
+        alert('❌ Account already exists. Please login.');
         return;
     }
 
     const newUser = {
         email: email,
         password: password,
-        coins: 500, // Starting coins
+        coins: 1000, // Starting coins (equivalent to $1)
         isPro: false,
         proExpiry: null,
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        isAdmin: false,
+        messagesUsed: 0,
+        lastResetTime: Date.now(),
+        imagesGenerated: 0
     };
 
     localStorage.setItem(userKey, JSON.stringify(newUser));
@@ -108,7 +278,7 @@ function handleSignup() {
     saveUser();
     closeSignupModal();
     updateUI();
-    alert('Account created! You received 500 free coins 🎉');
+    alert('🎉 Account created! You received 1000 welcome coins ($1 value)!');
 }
 
 function logout() {
@@ -117,6 +287,7 @@ function logout() {
         localStorage.removeItem('currentUser');
         updateUI();
         clearChat();
+        location.reload();
     }
 }
 
@@ -128,17 +299,10 @@ function updateUI() {
     if (currentUser) {
         loginBtn.style.display = 'none';
         username.textContent = currentUser.email;
-        coinAmount.textContent = currentUser.coins;
+        coinAmount.textContent = currentUser.coins.toLocaleString();
         
-        // Check if Pro expired
-        if (currentUser.isPro && currentUser.proExpiry) {
-            if (Date.now() > currentUser.proExpiry) {
-                currentUser.isPro = false;
-                currentUser.proExpiry = null;
-                saveUser();
-                alert('Your Pro subscription has expired');
-            }
-        }
+        // Show message limit for free users
+        updateMessageCounter();
     } else {
         loginBtn.style.display = 'block';
         username.textContent = 'Guest';
@@ -146,8 +310,43 @@ function updateUI() {
     }
 }
 
+function updateMessageCounter() {
+    let counter = document.getElementById('messageCounter');
+    
+    if (!counter) {
+        counter = document.createElement('div');
+        counter.id = 'messageCounter';
+        counter.className = 'message-counter';
+        document.querySelector('.sidebar-footer').prepend(counter);
+    }
+    
+    const remaining = getRemainingMessages();
+    const timeLeft = getTimeUntilReset();
+    
+    if (currentUser && (currentUser.isPro || currentUser.isAdmin)) {
+        counter.innerHTML = '<div class="pro-badge">⭐ Pro - Unlimited Messages</div>';
+    } else if (remaining === 'Unlimited') {
+        counter.innerHTML = '<div class="free-badge">💬 50 Free Messages</div>';
+    } else if (timeLeft) {
+        counter.innerHTML = `
+            <div class="limit-badge">
+                ⏰ Limit Reached<br>
+                <small>Reset in: ${timeLeft}</small>
+            </div>
+        `;
+    } else {
+        counter.innerHTML = `<div class="free-badge">💬 ${remaining}/50 Messages Left</div>`;
+    }
+}
+
 // Chat Functions
 function newChat() {
+    if (!currentUser) {
+        alert('❌ Please login to start chatting');
+        showLoginModal();
+        return;
+    }
+    
     currentChatId = 'chat_' + Date.now();
     chatHistory[currentChatId] = {
         title: 'New Chat',
@@ -243,7 +442,7 @@ function handleKeyPress(event) {
 
 async function sendMessage() {
     if (!currentUser) {
-        alert('Please login to send messages');
+        alert('❌ Please login to send messages');
         showLoginModal();
         return;
     }
@@ -253,9 +452,10 @@ async function sendMessage() {
 
     if (!message) return;
 
-    // Check if user has coins
-    if (currentUser.coins < 1 && !currentUser.isPro) {
-        alert('You need coins to send messages. Please buy coins or upgrade to Pro.');
+    // Check message limit
+    if (!canSendMessage()) {
+        const timeLeft = getTimeUntilReset();
+        alert(`⏰ You've reached your daily limit of ${FREE_MESSAGE_LIMIT} messages.\n\nReset in: ${timeLeft}\n\n⭐ Upgrade to Pro for unlimited messages!`);
         showUpgradeModal();
         return;
     }
@@ -266,11 +466,12 @@ async function sendMessage() {
         chatHistory[currentChatId].title = message.substring(0, 30) + (message.length > 30 ? '...' : '');
     }
 
-    // Deduct coins if not Pro
-    if (!currentUser.isPro) {
-        currentUser.coins -= 1;
+    // Increment message count for free users
+    if (!currentUser.isPro && !currentUser.isAdmin) {
+        currentUser.messagesUsed = (currentUser.messagesUsed || 0) + 1;
         saveUser();
         updateUI();
+        updateMessageCounter();
     }
 
     // Add user message
@@ -353,15 +554,13 @@ function toggleImageMenu() {
 
 async function generateImage(type) {
     if (!currentUser) {
-        alert('Please login to generate images');
+        alert('❌ Please login to generate images');
         showLoginModal();
         return;
     }
 
-    const imageCost = 10; // 10 coins per image
-
-    if (currentUser.coins < imageCost && !currentUser.isPro) {
-        alert('You need ' + imageCost + ' coins to generate an image. Please buy coins or upgrade to Pro.');
+    if (currentUser.coins < IMAGE_COST && !currentUser.isPro && !currentUser.isAdmin) {
+        alert(`❌ You need ${IMAGE_COST} coins to generate an image.\n\nYou have: ${currentUser.coins} coins\n\n💰 Buy more coins or upgrade to Pro!`);
         showUpgradeModal();
         return;
     }
@@ -390,9 +589,10 @@ async function generateImage(type) {
         chatHistory[currentChatId].title = 'Image: ' + prompt.substring(0, 20) + '...';
     }
 
-    // Deduct coins if not Pro
-    if (!currentUser.isPro) {
-        currentUser.coins -= imageCost;
+    // Deduct coins if not Pro/Admin
+    if (!currentUser.isPro && !currentUser.isAdmin) {
+        currentUser.coins -= IMAGE_COST;
+        transferToAdmin(IMAGE_COST, 'Image Generation Fee');
         saveUser();
         updateUI();
     }
@@ -412,7 +612,7 @@ async function generateImage(type) {
     messages.appendChild(loadingDiv);
     messages.scrollTop = messages.scrollHeight;
 
-    // Simulate image generation (replace with real API call)
+    // Simulate image generation
     setTimeout(() => {
         loadingDiv.remove();
         const imageUrl = 'https://picsum.photos/500/500?random=' + Date.now();
@@ -429,7 +629,7 @@ async function generateImage(type) {
 // Upgrade Functions
 function showUpgradeModal() {
     if (!currentUser) {
-        alert('Please login first');
+        alert('❌ Please login first');
         showLoginModal();
         return;
     }
@@ -442,32 +642,42 @@ function closeUpgradeModal() {
 
 function purchasePlan(plan) {
     if (!currentUser) {
-        alert('Please login first');
+        alert('❌ Please login first');
         showLoginModal();
         return;
     }
 
     const plans = {
-        monthly: { cost: 1000, days: 30, name: 'Monthly Pro' },
-        yearly: { cost: 10000, days: 365, name: 'Yearly Pro' }
+        monthly: { cost: MONTHLY_PRO_COST, days: 30, name: 'Monthly Pro', usd: 10 },
+        yearly: { cost: YEARLY_PRO_COST, days: 365, name: 'Yearly Pro', usd: 100 }
     };
 
     const selectedPlan = plans[plan];
 
     if (currentUser.coins < selectedPlan.cost) {
-        alert('Not enough coins! You need ' + selectedPlan.cost + ' coins.');
+        const needed = selectedPlan.cost - currentUser.coins;
+        alert(`❌ Not enough coins!\n\nYou need: ${selectedPlan.cost.toLocaleString()} coins ($${selectedPlan.usd})\nYou have: ${currentUser.coins.toLocaleString()} coins\nYou need: ${needed.toLocaleString()} more coins`);
         showBuyCoins();
         return;
     }
 
-    if (confirm('Purchase ' + selectedPlan.name + ' for ' + selectedPlan.cost + ' coins?')) {
+    if (confirm(`Purchase ${selectedPlan.name} for ${selectedPlan.cost.toLocaleString()} coins ($${selectedPlan.usd} USD)?\n\n✅ Unlimited messages\n✅ Free image generation\n✅ Priority support\n✅ ${selectedPlan.days} days access`)) {
         currentUser.coins -= selectedPlan.cost;
         currentUser.isPro = true;
         currentUser.proExpiry = Date.now() + (selectedPlan.days * 24 * 60 * 60 * 1000);
+        
+        // Reset message count when upgrading
+        currentUser.messagesUsed = 0;
+        currentUser.lastResetTime = Date.now();
+        
+        // Transfer coins to admin
+        transferToAdmin(selectedPlan.cost, `${selectedPlan.name} Purchase`);
+        
         saveUser();
         updateUI();
+        updateMessageCounter();
         closeUpgradeModal();
-        alert('🎉 Welcome to Pro! Your subscription is active for ' + selectedPlan.days + ' days.');
+        alert(`🎉 Welcome to Pro!\n\nYour subscription is active for ${selectedPlan.days} days.\n\n✨ Enjoy unlimited messages and free image generation!`);
     }
 }
 
@@ -482,17 +692,20 @@ function closeBuyCoinsModal() {
 
 function buyCoins(amount, price) {
     if (!currentUser) {
-        alert('Please login first');
+        alert('❌ Please login first');
         showLoginModal();
         return;
     }
 
-    if (confirm('Buy ' + amount + ' coins for $' + price + ' USD?')) {
-        // In real app, integrate payment processor here
-        alert('Payment feature coming soon! For demo: coins added.');
+    if (confirm(`Purchase ${amount.toLocaleString()} coins for $${price} USD?\n\n💰 This will be added to your account immediately.`)) {
+        // In real app, integrate payment processor here (Stripe, PayPal, etc.)
+        alert(`💳 Payment Processing...\n\nIn a real app, you would be redirected to a payment gateway.\n\nFor demo purposes, coins have been added to your account!`);
+        
         currentUser.coins += amount;
         saveUser();
         updateUI();
         closeBuyCoinsModal();
+        
+        alert(`✅ Success!\n\n${amount.toLocaleString()} coins have been added to your account!\n\nNew balance: ${currentUser.coins.toLocaleString()} coins`);
     }
 }
