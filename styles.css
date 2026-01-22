@@ -628,6 +628,71 @@ body {
     background: #6E6F7E;
 }
 
+/* Message Counter */
+.message-counter {
+    padding: 10px;
+    background: #2A2B32;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.pro-badge {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+    padding: 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.free-badge {
+    color: #10A37F;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.limit-badge {
+    color: #EF4444;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.limit-warning {
+    background: #2A2B32;
+    border: 2px solid #EF4444;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.warning-content h3 {
+    color: #EF4444;
+    margin-bottom: 12px;
+}
+
+.warning-content p {
+    margin-bottom: 8px;
+    color: #ACACBE;
+}
+
+.upgrade-now-btn {
+    margin-top: 16px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.upgrade-now-btn:hover {
+    transform: scale(1.05);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .sidebar {
