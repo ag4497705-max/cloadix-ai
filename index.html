@@ -111,6 +111,44 @@
             <div class="pricing-cards">
                 <div class="pricing-card">
                     <div class="plan-name">Monthly Pro</div>
+                    <div class="plan-price">🪙 10,000 coins</div>
+                    <div class="plan-value">($10 USD)</div>
+                    <ul class="plan-features">
+                        <li>✓ Unlimited messages forever</li>
+                        <li>✓ Free image generation</li>
+                        <li>✓ No daily limits</li>
+                        <li>✓ Priority support</li>
+                        <li>✓ 30 days access</li>
+                    </ul>
+                    <button class="purchase-btn" onclick="purchasePlan('monthly')">
+                        Purchase Monthly
+                    </button>
+                </div>
+                <div class="pricing-card featured">
+                    <div class="best-value">BEST VALUE - SAVE $20</div>
+                    <div class="plan-name">Yearly Pro</div>
+                    <div class="plan-price">🪙 100,000 coins</div>
+                    <div class="plan-value">($100 USD)</div>
+                    <ul class="plan-features">
+                        <li>✓ Everything in Monthly</li>
+                        <li>✓ Unlimited messages forever</li>
+                        <li>✓ Free image generation</li>
+                        <li>✓ 365 days access</li>
+                        <li>✓ Save 2 months!</li>
+                        <li>✓ Exclusive features</li>
+                    </ul>
+                    <button class="purchase-btn featured-btn" onclick="purchasePlan('yearly')">
+                        Purchase Yearly
+                    </button>
+                </div>
+            </div>
+            <div class="coin-info">
+                <p>💰 1000 coins = $1 USD</p>
+                <button class="buy-coins-btn" onclick="showBuyCoins()">Buy Coins</button>
+            </div></h2>
+            <div class="pricing-cards">
+                <div class="pricing-card">
+                    <div class="plan-name">Monthly Pro</div>
                     <div class="plan-price">🪙 1,000 coins</div>
                     <div class="plan-value">($10 USD)</div>
                     <ul class="plan-features">
@@ -151,27 +189,32 @@
         <div class="modal-overlay" onclick="closeBuyCoinsModal()"></div>
         <div class="modal-box">
             <h2>💰 Buy Coins</h2>
+            <p style="text-align: center; color: #ACACBE; margin-bottom: 20px;">1000 coins = $1 USD</p>
             <div class="coin-packages">
-                <div class="coin-package" onclick="buyCoins(500, 5)">
-                    <div class="package-coins">🪙 500</div>
+                <div class="coin-package" onclick="buyCoins(1000, 1)">
+                    <div class="package-coins">🪙 1,000</div>
+                    <div class="package-price">$1 USD</div>
+                </div>
+                <div class="coin-package" onclick="buyCoins(5000, 5)">
+                    <div class="package-coins">🪙 5,000</div>
                     <div class="package-price">$5 USD</div>
                 </div>
-                <div class="coin-package" onclick="buyCoins(1000, 10)">
-                    <div class="package-coins">🪙 1,000</div>
+                <div class="coin-package featured" onclick="buyCoins(12000, 10)">
+                    <div class="bonus-badge">+2K FREE</div>
+                    <div class="package-coins">🪙 12,000</div>
                     <div class="package-price">$10 USD</div>
                 </div>
-                <div class="coin-package featured" onclick="buyCoins(2500, 20)">
-                    <div class="bonus-badge">+500 FREE</div>
-                    <div class="package-coins">🪙 2,500</div>
-                    <div class="package-price">$20 USD</div>
+                <div class="coin-package" onclick="buyCoins(25000, 25)">
+                    <div class="package-coins">🪙 25,000</div>
+                    <div class="package-price">$25 USD</div>
                 </div>
-                <div class="coin-package" onclick="buyCoins(5000, 50)">
-                    <div class="package-coins">🪙 5,000</div>
+                <div class="coin-package" onclick="buyCoins(50000, 50)">
+                    <div class="package-coins">🪙 50,000</div>
                     <div class="package-price">$50 USD</div>
                 </div>
-                <div class="coin-package featured" onclick="buyCoins(12000, 100)">
-                    <div class="bonus-badge">+2000 FREE</div>
-                    <div class="package-coins">🪙 12,000</div>
+                <div class="coin-package featured" onclick="buyCoins(120000, 100)">
+                    <div class="bonus-badge">+20K FREE</div>
+                    <div class="package-coins">🪙 120,000</div>
                     <div class="package-price">$100 USD</div>
                 </div>
             </div>
